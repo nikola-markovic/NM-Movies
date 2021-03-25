@@ -32,15 +32,20 @@ struct MovieDetailsView: View {
                     Spacer()
                 }
                 HStack {
-                    Text("\(movie.title ?? "") (\(movie.original_language ?? ""))").font(.title2).bold()
+                    Text("\(movie.title ?? "") (\(movie.original_language ?? ""))".uppercased())
+                        .font(.title2)
+                        .bold()
                     Spacer()
                     VStack(alignment: .trailing) {
                         RatingView(voteAverage: movie.vote_average ?? .zero)
-                        Text("\(movie.vote_count ?? 0)").font(.caption).foregroundColor(.gray)
+                        Text("\(movie.vote_count ?? 0)")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
                 }
                 if movie.original_title != movie.title {
-                    Text("aka \(movie.original_title ?? "")").font(.title3)
+                    Text("aka \(movie.original_title ?? "")")
+                        .font(.title3)
                 }
                 Text(movie.genres?.compactMap({ $0.name }).joined(separator: ", ") ?? "")
                     .bold()

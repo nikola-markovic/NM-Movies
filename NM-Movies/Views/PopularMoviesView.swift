@@ -2,72 +2,51 @@
 import SwiftUI
 
 struct PopularMoviesView: View {
-    @State var moviesToShow: [Movie]
-    @State var showingAlert = false
-    @State var alertTitle = ""
-    @State var alertDescription = ""
-    @State var currentPageNumber = 1
-    @State var totalPages = 1
-    
-    func loadPopularMovies(forPage page: Int = 1) {
-        HttpClient.shared.getPopularMovies(fromPage: page) { (httpClientResponse) in
-            switch httpClientResponse {
-            case .success(let popularMovies):
-                moviesToShow = popularMovies.results
-                currentPageNumber = popularMovies.page
-                totalPages = popularMovies.total_pages
-            case .failure(let error):
-                moviesToShow = [Movie]()
-                alertTitle = "Error"
-                alertDescription = "Fetching failed with error:\n\(error.localizedDescription)"
-                showingAlert = true
-            }
-        }
-    }
+    @ObservedObject var model = PopularMoviesViewModel()
     
     var body: some View {
         NavigationView {
-            List(moviesToShow, id:\.id) { movie in
+            List(model.movies, id:\.id) { movie in
                 NavigationLink(destination: MovieDetailsView(movie: movie)) {
                     MovieTileView(movie: movie)
                 }
             }
             .listStyle(PlainListStyle())
             .navigationBarItems(leading: Button(action: {
-                alertTitle = "Popular movies"
-                alertDescription = "By Nikola Marković"
-                showingAlert = true
+                model.alertTitle = "Popular movies"
+                model.alertDescription = "By Nikola Marković"
+                model.showingAlert = true
             }) {
                 Image(systemName: "info.circle.fill")
                     .foregroundColor(.blue)
             }, trailing: Button(action: {
-                loadPopularMovies()
+                model.refresh()
             }) {
                 Image(systemName: "arrow.clockwise.circle.fill")
                     .foregroundColor(.blue)
             })
             .navigationBarTitle("Popular movies", displayMode: .automatic)
             .onAppear(perform: {
-                loadPopularMovies(forPage: currentPageNumber)
+                model.refresh()
             })
-            .alert(isPresented: $showingAlert) {
-                Alert(title: Text(alertTitle), message: Text(alertDescription), dismissButton: .default(Text("OK")))
+            .alert(isPresented: $model.showingAlert) {
+                Alert(title: Text(model.alertTitle), message: Text(model.alertDescription), dismissButton: .default(Text("OK")))
             }
             .toolbar {
                 ToolbarItemGroup(placement: .bottomBar, content: {
                     Button(action: {
-                        loadPopularMovies(forPage: currentPageNumber - 1)
+                        model.loadPreviousPage()
                     }) {
                         Image(systemName: "arrow.backward.circle.fill")
-                    }.disabled(currentPageNumber <= 1)
+                    }.disabled(model.currentPageNumber <= 1)
                     Spacer()
-                    Text("Page \(currentPageNumber) of \(totalPages)")
+                    Text("Page \(model.currentPageNumber) of \(model.totalPages)")
                     Spacer()
                     Button(action: {
-                        loadPopularMovies(forPage: currentPageNumber + 1)
+                        model.loadNextPage()
                     }) {
                         Image(systemName: "arrow.forward.circle.fill")
-                    }.disabled(currentPageNumber == totalPages)
+                    }.disabled(model.currentPageNumber == model.totalPages)
                 })
             }
         }
@@ -76,6 +55,6 @@ struct PopularMoviesView: View {
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        PopularMoviesView(moviesToShow: MockData.mockArray)
+        PopularMoviesView()
     }
 }
